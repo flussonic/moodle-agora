@@ -1,0 +1,61 @@
+# Валидация тега и публикация GitHub Release с ZIP плагина.
+# Живёт в mod_agora/.github/workflows/, чтобы через git subtree split попасть
+# в корень GitHub-репо moodle-mod_agora. В ZIP не входит (build-zip.sh и
+# шаг сборки ниже исключают .git*/.github).
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate version.php against the tag
+        run: |
+          set -euo pipefail
+          VERSION=$(sed -nE 's/^\$plugin->version *= *([0-9]+);.*/\1/p' version.php)
+          MATURITY=$(grep -oE 'MATURITY_[A-Z]+' version.php | head -1)
+          RELEASE=$(sed -nE "s/^\\\$plugin->release *= *'([^']+)'.*/\1/p" version.php)
+          echo "tag: ${GITHUB_REF_NAME}, version.php: version=${VERSION} release='${RELEASE}' maturity=${MATURITY}"
+          [ "$MATURITY" != "MATURITY_ALPHA" ] || { echo "maturity ALPHA в релизном теге"; exit 1; }
+          BUILD_DATE=${VERSION:0:8}
+          grep -qF "(Build: ${BUILD_DATE})" <<<"$RELEASE" \
+            || { echo "дата Build в release не совпадает с датой version"; exit 1; }
+          case "$GITHUB_REF_NAME" in
+            *-rc.*)
+              grep -qF "rc." <<<"$RELEASE" || { echo "тег rc, а release без rc"; exit 1; } ;;
+            *)
+              grep -qF "rc." <<<"$RELEASE" && { echo "стабильный тег, а release с rc"; exit 1; } ;;
+          esac
+
+      - name: Build the plugin ZIP
+        run: |
+          set -euo pipefail
+          mkdir -p stage/agora
+          rsync -a \
+            --exclude='lang/ru' \
+            --exclude='.git*' \
+            --exclude='.github' \
+            --exclude='.scratchpad' \
+            --exclude='*.orig' \
+            --exclude='*.rej' \
+            --exclude='.phpunit.result.cache' \
+            ./ stage/agora/
+          (cd stage && zip -qr "$GITHUB_WORKSPACE/agora.zip" agora)
+
+      - name: Publish the GitHub Release
+        run: |
+          set -euo pipefail
+          PRERELEASE=""
+          case "$GITHUB_REF_NAME" in *-rc.*) PRERELEASE="--prerelease" ;; esac
+          gh release create "$GITHUB_REF_NAME" agora.zip \
+            --title "$GITHUB_REF_NAME" --generate-notes $PRERELEASE
+        env:
+          GH_TOKEN: ${{ github.token }}
