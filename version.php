@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_agora';
-$plugin->version   = 2026102200;
+$plugin->version   = 2026102201;
 $plugin->requires  = 2024100700; // Moodle 4.5 LTS.
-$plugin->maturity  = MATURITY_RC;
-$plugin->release   = '1.0.0-rc.1 (Build: 20261022)';
+$plugin->maturity  = MATURITY_STABLE;
+$plugin->release   = '1.0.0 (Build: 20261022)';
