@@ -1,0 +1,68 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_agora/course_card
+
+    Card of another course of the learner: the card target's frame as a cover
+    with a "stack", its state badge, and a "Broadcasts: N" overlay, the course
+    name and the "Up next" substring ("On air" for a live target). The link
+    leads to the same target.
+
+    Classes required for JS:
+    * none
+
+    Data attributes required for JS:
+    * none
+
+    Context variables required for this template:
+    * card object — data for the mod_agora/preview_card template (frame and
+      badge of the target)
+    * name string — course name, already passed through format_string (output
+      as HTML)
+    * link string — URL of the card target page
+    * streams number — how many broadcasts in the course
+    * next string — ready-made substring "Up next: name" or "On air: name"
+
+    Example context (json):
+    {
+        "card": {
+            "haslink": false,
+            "cardclass": "mod-agora-preview-card mod-agora-preview-side",
+            "decorative": false,
+            "hasimage": false,
+            "locked": false,
+            "hasbadge": false,
+            "srbadge": false
+        },
+        "name": "Financial reporting",
+        "link": "https://moodle.example.com/mod/agora/view.php?id=42",
+        "streams": 4,
+        "next": "Up next: Cash flow statement"
+    }
+}}
+<li class="mod-agora-card">
+    <a href="{{link}}" class="mod-agora-card-link">
+        <span class="mod-agora-card-cover">
+            {{#card}}{{> mod_agora/preview_card }}{{/card}}
+            <span class="mod-agora-card-count">{{#str}}streamscount, mod_agora, {{streams}}{{/str}}</span>
+        </span>
+        <span class="mod-agora-card-text">
+            <span class="mod-agora-card-name mod-agora-clamp-2">{{{name}}}</span>
+            <span class="mod-agora-card-sub text-muted mod-agora-clamp-1">{{next}}</span>
+        </span>
+    </a>
+</li>

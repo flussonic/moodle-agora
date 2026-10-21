@@ -1,0 +1,113 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_agora/publisher
+
+    Publisher: broadcasting from the browser to the broadcast over WHIP. The
+    signal starts right on page open (D8): camera and microphone are captured
+    automatically, the local frame is a live preview of the publication (D11).
+    Devices — three toggles with on/off states: camera, microphone, screen
+    (D9). Broadcast — one "On air" toggle, actions go as an AJAX POST to
+    publish.php without reload (D10). The phase plate and the signal status
+    line are server-side; polling every 15 seconds updates them (D5). The live
+    code is the `mod_agora/publisher` module: it reads the root element's data
+    attributes, asks Moodle for a ticket (`mod_agora_get_publish_ticket`) and
+    polls the broadcast state (`mod_agora_get_stream_state`).
+
+    Context variables required for this template:
+    * configured boolean — the ingest node (WHIP) address is set
+    * cmid int — course module
+    * stream string — broadcast name
+    * ticketttl int — publication ticket lifetime, seconds
+    * sesskey string — session key for broadcast actions
+    * publishurl string — publish.php URL for broadcast actions
+      (wwwroot-portable)
+    * planned boolean — the "scheduled" phase
+    * ongoing boolean — the "live" phase
+    * signallive boolean — broadcast signal is live (the "On air" toggle is
+      active)
+    * phasetext string — phase word for the plate
+    * recordurl string — recording URL on the element page (shown after
+      polling learns the broadcast ended in another window)
+
+    Example context (json):
+    {
+        "configured": true,
+        "cmid": 42,
+        "stream": "hr-lms-optics",
+        "ticketttl": 300,
+        "sesskey": "a1b2c3d4e5",
+        "publishurl": "https://moodle.example.com/mod/agora/publish.php",
+        "planned": false,
+        "ongoing": true,
+        "signallive": true,
+        "phasetext": "Live",
+        "recordurl": "https://moodle.example.com/mod/agora/view.php?id=42"
+    }
+}}
+<div class="mod-agora-publisher" data-region="agora-publisher" data-cmid="{{cmid}}"
+     data-stream="{{stream}}" data-ticketttl="{{ticketttl}}"
+     data-publishurl="{{publishurl}}" data-sesskey="{{sesskey}}">
+    <div class="mod-agora-publisher-phase alert alert-info" data-region="agora-broadcast-phase" role="status">{{phasetext}}</div>
+    <video class="mod-agora-publisher-video" data-region="agora-publisher-video" autoplay muted playsinline></video>
+    <div class="mod-agora-publisher-devices" data-region="agora-publisher-devices">
+        {{#configured}}
+            <button type="button" class="btn btn-outline-secondary" data-action="agora-toggle-camera"
+                    aria-pressed="false">{{#str}} publishercamera, mod_agora {{/str}}</button>
+            <button type="button" class="btn btn-outline-secondary" data-action="agora-toggle-mic"
+                    aria-pressed="false">{{#str}} publishermicrophone, mod_agora {{/str}}</button>
+            <button type="button" class="btn btn-outline-secondary" data-action="agora-toggle-screen"
+                    aria-pressed="false">{{#str}} publisherscreen, mod_agora {{/str}}</button>
+        {{/configured}}
+        {{^configured}}
+            {{! Without an ingest node address JS is not bound: render the
+                toggles disabled, with their server-side labels (review R2, Н-1). }}
+            <button type="button" class="btn btn-outline-secondary" data-action="agora-toggle-camera"
+                    aria-pressed="false" disabled>{{#str}} publishercamera, mod_agora {{/str}}</button>
+            <button type="button" class="btn btn-outline-secondary" data-action="agora-toggle-mic"
+                    aria-pressed="false" disabled>{{#str}} publishermicrophone, mod_agora {{/str}}</button>
+            <button type="button" class="btn btn-outline-secondary" data-action="agora-toggle-screen"
+                    aria-pressed="false" disabled>{{#str}} publisherscreen, mod_agora {{/str}}</button>
+            <div class="alert alert-warning" data-region="agora-publisher-nowhip">
+                {{#str}} publishnowhip, mod_agora {{/str}}
+            </div>
+        {{/configured}}
+    </div>
+    <div class="mod-agora-publisher-status alert alert-secondary" data-region="agora-publisher-status" role="status"></div>
+    <div class="mod-agora-publisher-broadcast" data-region="agora-broadcast-controls">
+        {{! "On air" toggle (D10): one button reflecting the phase. The action
+            is an AJAX POST to publish.php without reload; turning off uses the
+            same irreversibility confirmation as the element page button (its
+            text is supplied by JS). }}
+        {{#planned}}
+            <button type="button" class="btn btn-outline-secondary" data-action="agora-toggle-broadcast"
+                    aria-pressed="false"
+                    {{^signallive}}disabled title="{{#str}} startbroadcastnosignal, mod_agora {{/str}}"{{/signallive}}>{{#str}} publisherbroadcaston, mod_agora {{/str}}</button>
+        {{/planned}}
+        {{#ongoing}}
+            <button type="button" class="btn btn-primary" data-action="agora-toggle-broadcast"
+                    aria-pressed="true">{{#str}} publisherbroadcastoff, mod_agora {{/str}}</button>
+        {{/ongoing}}
+        {{! Broadcast ended in another window: polling hides the toggle and
+            shows the link to the recording — server-side render never gets
+            here (publish.php redirects a finished element to the element
+            page). }}
+        <div class="mod-agora-publisher-ended" data-region="agora-broadcast-ended" hidden>
+            <a href="{{recordurl}}" class="btn btn-outline-secondary">{{#str}} watchrecord, mod_agora {{/str}}</a>
+        </div>
+    </div>
+</div>

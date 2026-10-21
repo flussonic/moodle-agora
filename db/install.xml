@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="mod/agora/db" VERSION="20261013" COMMENT="XMLDB file for Moodle mod_agora"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="agora" COMMENT="Элементы курса «Эфир Agora»">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="course" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="intro" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="stream_name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Имя эфира в Agora"/>
+        <FIELD NAME="created_by_plugin" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Эфир заведён плагином, а не оператором"/>
+        <FIELD NAME="display_mode" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="auto" SEQUENCE="false" COMMENT="auto | live_only | record_only"/>
+        <FIELD NAME="completion_minutes" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Минут просмотра для прохождения, 0 — условие выключено"/>
+        <FIELD NAME="timestart" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Дата начала эфира, 0 — не задана"/>
+        <FIELD NAME="ondemand" TYPE="int" LENGTH="1" NOTNULL="false" SEQUENCE="false" COMMENT="Флаг ondemand из конфига эфира: 1, 0 или NULL — «решает шаблон»"/>
+        <FIELD NAME="last_live_at" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Когда плагин сам видел эфир живым, unix-секунды; 0 — ни разу"/>
+        <FIELD NAME="started_at" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Фаза элемента: эфир объявлен, unix-секунды; 0 — «запланирован»"/>
+        <FIELD NAME="ended_at" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Фаза элемента: эфир завершён, unix-секунды; 0 — «идёт»"/>
+        <FIELD NAME="ended_by" TYPE="char" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Кто завершил эфир: button | silence | system; NULL — завершения не было"/>
+        <FIELD NAME="recording_id" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false" COMMENT="Связанная запись эфира в Agora; NULL — записи нет"/>
+        <FIELD NAME="has_phases" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="1 — элемент с фазами эфира (новые), 0 — наследие MVP без блоков ведения"/>
+        <FIELD NAME="end_pending" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="1 — завершение эфира начато, но действия ещё не подтверждены"/>
+        <FIELD NAME="end_pending_at" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Когда началась неподтверждённая доводка завершения, unix-секунды; 0 — доводки нет"/>
+        <FIELD NAME="end_failure" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Текст последнего отказа доводки завершения: действие, причина"/>
+        <FIELD NAME="srt_port" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Порт секции srt_publish эфира; 0 — секции нет (снята или не заводилась)"/>
+        <FIELD NAME="srt_key" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Ключ публикации (passphrase) зашифрованный \\core\\encryption; NULL — ключа нет"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Когда элемент создан, unix-секунды; порог свежести для смягчения 404 stats"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="course" TYPE="foreign" FIELDS="course" REFTABLE="course" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="stream_name" UNIQUE="false" FIELDS="stream_name"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="agora_grants" COMMENT="Билеты просмотра, выданные сервером Agora">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="agoraid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Элемент курса"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Слушатель; 0 — служебный билет превью"/>
+        <FIELD NAME="purpose" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="view" SEQUENCE="false" COMMENT="view | preview | publish"/>
+        <FIELD NAME="stream_name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Эфир, на который выписан билет: служебный билет превью ключуется им, а не элементом"/>
+        <FIELD NAME="jti" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="token" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JWT билета — секрет, в журналы и копии не попадает"/>
+        <FIELD NAME="scope" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Охват живого билета записи: имя эфира и vod-ассеты экспортов"/>
+        <FIELD NAME="user_id" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Идентификатор человека в Agora, собирается один раз"/>
+        <FIELD NAME="bind_ip" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false" COMMENT="Адрес слушателя, к которому привязан билет; пусто — билет без привязки"/>
+        <FIELD NAME="expires_at" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="issued" SEQUENCE="false" COMMENT="issued | revoked | expired"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="agoraid" TYPE="foreign" FIELDS="agoraid" REFTABLE="agora" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="pair" UNIQUE="false" FIELDS="agoraid, userid, purpose"/>
+        <INDEX NAME="jti" UNIQUE="false" FIELDS="jti"/>
+        <INDEX NAME="purposestream" UNIQUE="false" FIELDS="purpose, stream_name"/>
+        <INDEX NAME="statusexpires" UNIQUE="false" FIELDS="status, expires_at"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="agora_watch" COMMENT="Накопленная длительность просмотра пары «элемент + слушатель»">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="agoraid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Элемент курса"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Слушатель"/>
+        <FIELD NAME="watched_secs" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Засчитанные секунды: от открытия сессии до последнего обращения"/>
+        <FIELD NAME="polled_until" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Правая граница последнего успешного опроса истории, unix-секунды"/>
+        <FIELD NAME="user_ref" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="user_id пары в Agora: собран при первой выдаче билета и живёт дольше билетов"/>
+        <FIELD NAME="lastexpiry" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Срок последнего билета пары, unix-секунды: по нему задача решает, опрашивать ли пару"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="agoraid" TYPE="foreign" FIELDS="agoraid" REFTABLE="agora" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="pair" UNIQUE="true" FIELDS="agoraid, userid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="agora_tombstones" COMMENT="Надгробия: эфиры плагина, которые удалить после срока">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="streamname" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="deleteafter" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="streamname" UNIQUE="true" FIELDS="streamname"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

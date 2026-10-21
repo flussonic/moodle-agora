@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<ruleset name="mod_agora">
+    <description>Moodle coding style for the Agora broadcast plugin, with two documented exceptions.</description>
+
+    <file>.</file>
+
+    <rule ref="moodle">
+        <!--
+            The plugin's TODOs point at openspec change slices in the design
+            repository, not at tracker.moodle.org issues: requiring an MDL-…
+            reference on every TODO is meaningless here.
+        -->
+        <exclude name="moodle.Commenting.TodoComment"/>
+        <!--
+            The module is deliberately split: lib.php, db/upgrade.php, the
+            backup classes and the test fixtures declare
+            `defined('MOODLE_INTERNAL') || die()` the standard way, while the
+            newer moodle-cs sniff reads that as "no side effects". That is
+            the module's design, not a defect.
+        -->
+        <exclude name="moodle.Files.MoodleInternal"/>
+    </rule>
+
+    <!--
+        Behat step definitions are annotations holding regular expressions:
+        they must live on a single docblock line, there is nowhere to wrap.
+    -->
+    <rule ref="moodle.Files.LineLength">
+        <exclude-pattern>tests/behat/*</exclude-pattern>
+    </rule>
+
+    <!--
+        The central stub for Behat is an HTTP endpoint, not a Moodle page:
+        there is no session to `require_login()` against, it is guarded by
+        `BEHAT_SITE_RUNNING`.
+    -->
+    <rule ref="moodle.Files.RequireLogin">
+        <exclude-pattern>tests/fixtures/*</exclude-pattern>
+    </rule>
+</ruleset>

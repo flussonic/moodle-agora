@@ -1,0 +1,722 @@
+/* Плеер Agora занимает ширину страницы и держит 16:9. */
+.mod-agora-player-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 1280px;
+    aspect-ratio: 16 / 9;
+}
+
+.mod-agora-player {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.mod-agora-preview {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.25rem;
+}
+
+/* Строка элемента на странице курса — как в списке видеосервиса: кадр слева
+   на месте иконки модуля, имя, дата и подзаголовок справа. Сетка строки —
+   штатная `.activity-grid` темы Boost с областями icon/name/dates/afterlink;
+   мы лишь переносим свой кадр в область icon и гасим саму иконку. */
+/* Специфичность выше правил Boost (`.activity-item .activity-grid .x`): наш
+   CSS подключается раньше темы, и при равном весе тема побеждает. */
+li.activity.modtype_agora .activity-item .activity-grid .activity-icon {
+    display: none;
+}
+
+li.activity.modtype_agora .activity-item .activity-grid {
+    align-items: start;
+    /* Имя, дата и подзаголовок жмутся к верху строки, лишняя высота
+       (кадр выше текста) уходит в последнюю строку сетки, а не между ними. */
+    grid-template-rows: repeat(5, min-content) 1fr;
+}
+
+li.activity.modtype_agora .activity-item .activity-grid .activity-altcontent {
+    grid-area: icon;
+    align-self: start;
+    margin: 0 0.75rem 0 0;
+    max-width: none;
+    /* Boost рисует разделитель над описанием и над afterlink — в строке списка
+       это лишние линии над кадром и под именем. */
+    border-top: 0;
+    padding-top: 0;
+}
+
+li.activity.modtype_agora .activity-item .activity-grid .activity-afterlink {
+    border-top: 0;
+    padding-top: 0;
+    margin-top: 0;
+    /* Ядро выкладывает afterlink флекс-строкой без переноса (`d-flex`); наши
+       подзаголовок и имя эфира — отдельные строки. */
+    flex-wrap: wrap;
+}
+
+/* Имя элемента без пробелов (250 букв) на узком экране вылезало за строку:
+   ядро переносов внутри слова не задаёт. */
+li.activity.modtype_agora .activity-item .activity-name-area {
+    min-width: 0;
+}
+
+li.activity.modtype_agora .activity-item .activityname a {
+    overflow-wrap: anywhere;
+}
+
+/* Подзаголовок и имя эфира — каждый своей строкой во всю ширину: `afterlink`
+   Boost выкладывает детей строкой, и короткий подзаголовок склеивался бы с
+   именем эфира без пробела. */
+.mod-agora-subtitle,
+.mod-agora-meta {
+    display: block;
+    flex-basis: 100%;
+    width: 100%;
+    margin-top: 0.15rem;
+}
+
+.mod-agora-subtitle {
+    font-size: 0.9rem;
+    line-height: 1.3;
+}
+
+/* Имя эфира нужно только преподавателю: мельче и приглушённее подзаголовка. */
+.mod-agora-meta {
+    font-size: 0.8rem;
+    line-height: 1.3;
+}
+
+/* Кадр — карточка 16:9, кликабельная, с радиусом и тенью карточек Boost. */
+.mod-agora-preview-card {
+    position: relative;
+    display: block;
+    flex: none;
+    aspect-ratio: 16 / 9;
+    margin: 0;
+    overflow: hidden;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+    /* Пока кадра нет — нейтральная заливка, а не чёрный прямоугольник. */
+    background: #e9ecef;
+    isolation: isolate;
+    transition: box-shadow 0.15s ease;
+}
+
+.mod-agora-preview-card:hover,
+.mod-agora-preview-card:focus-visible {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+}
+
+/* Картинку режет сама карточка (overflow: hidden); у картинки радиуса нет.
+   Специфичность — выше правил темы для картинок в описании элемента. */
+li.activity.modtype_agora .activity-item .mod-agora-preview-card img.mod-agora-preview,
+.mod-agora-preview-card .mod-agora-preview {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+/* Два размера карточки: в списке курса и в боковой колонке страницы элемента. */
+.mod-agora-preview-course {
+    width: 200px;
+}
+
+.mod-agora-preview-side {
+    width: 168px;
+}
+
+@media (max-width: 575.98px) {
+    .mod-agora-preview-course {
+        width: 120px;
+    }
+}
+
+/* Карточка без кадра: нейтральная заливка и пиктограмма эфира по центру. */
+.mod-agora-preview-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: none;
+    border: 1px solid #dee2e6;
+}
+
+.mod-agora-preview-empty .icon {
+    width: 2rem;
+    height: 2rem;
+    font-size: 1.6rem;
+    margin: 0;
+    opacity: 0.45;
+}
+
+/* Бейдж состояния на кадре — правый верхний угол, как у видеосервисов. */
+.mod-agora-state-badge {
+    position: absolute;
+    top: 0.4rem;
+    right: 0.4rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 0.25rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: 0.01em;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.72);
+    pointer-events: none;
+}
+
+.mod-agora-state-badge-live {
+    background: #e0242c;
+}
+
+/* Бейдж обрыва: тёмно-янтарный, контраст с белым текстом 4,7:1 — прежний
+   #d98c00 давал 2,6:1 и на кадре читался плохо. */
+.mod-agora-state-badge-signal-lost {
+    background: #a35d00;
+}
+
+.mod-agora-state-badge-ended-recorded {
+    background: rgba(0, 0, 0, 0.72);
+}
+
+/* Штатный бейдж у имени остаётся для читалок экрана и поиска, глазами его
+   заменяет накладка на кадре. */
+li.activity.modtype_agora .activity-item .activitytitle .activitybadge {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ======================================================================
+   Страница элемента: две строки сетки — сцена и список эфиров курса,
+   под ними область комментариев и карточки других курсов.
+   ====================================================================== */
+
+/* Ширину меряем у контейнера, а не у окна: дроверы Boost (индекс курса слева,
+   блоки справа) отнимают место у сцены, и окно 1440px может оставить ей 800.
+   Контейнерный запрос не умеет стилизовать сам контейнер, поэтому контейнер —
+   внешний элемент, а сетка живёт на вложенном. */
+.mod-agora-watch {
+    container-type: inline-size;
+}
+
+/* Узкий экран — одна колонка в порядке разметки: сцена, список, комментарии,
+   другие курсы. */
+.mod-agora-watch-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    /* Не `start`: ячейка списка обязана растянуться на высоту строки, иначе
+       абсолютная секция внутри неё считает `inset: 0` от нулевой коробки. */
+    align-items: stretch;
+}
+
+@container (min-width: 900px) {
+    .mod-agora-watch-split {
+        grid-template-columns: minmax(0, 1fr) 360px;
+        gap: 1rem;
+    }
+
+    .mod-agora-stage {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .mod-agora-playlist {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .mod-agora-comments {
+        grid-column: 1;
+        grid-row: 2;
+    }
+
+    .mod-agora-courses {
+        grid-column: 2;
+        grid-row: 2;
+    }
+
+    /* Пустой блок не оставляет пустой ячейки: сосед по строке занимает обе
+       колонки, а строки без обоих блоков в сетке не заводится вовсе. */
+    .mod-agora-watch-split:not(.mod-agora-has-playlist) .mod-agora-stage,
+    .mod-agora-watch-split:not(.mod-agora-has-courses) .mod-agora-comments,
+    .mod-agora-watch-split:not(.mod-agora-has-comments) .mod-agora-courses {
+        grid-column: 1 / -1;
+    }
+}
+
+@container (min-width: 1200px) {
+    .mod-agora-watch-split {
+        grid-template-columns: minmax(0, 1fr) 400px;
+        gap: 1.5rem;
+    }
+}
+
+.mod-agora-stage {
+    min-width: 0;
+}
+
+/* Сцена без плеера: заглушка держит 16:9, чтобы высота первой строки сетки не
+   зависела от состояния эфира и список рядом не схлопывался. */
+.mod-agora-stage-placeholder {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 1280px;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: 0.5rem;
+    background: #e9ecef;
+}
+
+.mod-agora-stage-placeholder .mod-agora-stage-frame {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 0;
+    /* Кадр — фон под словами: без притенения текст на нём не читается. */
+    filter: brightness(0.55);
+}
+
+.mod-agora-stage-note {
+    position: relative;
+    max-width: 36rem;
+    padding: 1rem;
+}
+
+/* Уведомление внутри поля не должно тянуть нижний отступ Boost; чужой ответ
+   без пробелов (начало HTML-страницы прокси) переносится, а не вылезает. */
+.mod-agora-stage-note .alert {
+    margin-bottom: 0;
+    overflow-wrap: anywhere;
+}
+
+/* Строка метаданных: слева факты об эфире, справа переходы кнопками. */
+.mod-agora-metaline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.mod-agora-metafacts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+}
+
+.mod-agora-metasep {
+    opacity: 0.6;
+}
+
+.mod-agora-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+/* Бейдж состояния в строке метаданных — тот же вид, но в потоке текста. */
+.mod-agora-state-inline {
+    padding: 0.1rem 0.45rem;
+    border-radius: 0.25rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.72);
+}
+
+.mod-agora-metastream {
+    font-size: 0.8rem;
+    overflow-wrap: anywhere;
+}
+
+.mod-agora-intro {
+    margin-top: 0.75rem;
+}
+
+.mod-agora-staleness {
+    margin-bottom: 0.5rem;
+}
+
+/* Правая колонка обеих строк: список эфиров курса и карточки других курсов. */
+.mod-agora-playlist,
+.mod-agora-courses,
+.mod-agora-comments {
+    min-width: 0;
+}
+
+.mod-agora-block-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem;
+}
+
+.mod-agora-block-sub {
+    font-size: 0.85rem;
+    line-height: 1.3;
+}
+
+.mod-agora-rows,
+.mod-agora-cards {
+    list-style: none;
+    margin: 0.5rem 0 0;
+    padding: 0;
+}
+
+/* Список эфиров курса ростом в первую строку сетки: прокручивается он весь
+   целиком — вместе с заголовком, который внутри прилипает к верху. Прокрутка
+   у `<ul>` своя не нужна: двух прокруток в одном блоке не бывает. */
+@container (min-width: 900px) {
+    .mod-agora-playlist {
+        position: relative;
+        min-height: 0;
+    }
+
+    .mod-agora-playlist-inner {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overflow-y: auto;
+    }
+
+    .mod-agora-playlist-inner .mod-agora-block-head {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        padding-bottom: 0.25rem;
+        background: var(--body-bg, #fff);
+    }
+}
+
+/* Кнопка «Показать все» — только узкий экран и только со свёрнутым списком;
+   класс ставит модуль mod_agora/watch, поэтому без JS список полный. */
+/* Специфичность выше `.btn` Bootstrap: тема грузится после нас и её
+   `display: inline-block` иначе побеждает — кнопка вылезала на широкий экран. */
+.mod-agora-playlist .mod-agora-showall.btn {
+    display: none;
+    padding-left: 0;
+}
+
+@container (max-width: 899.98px) {
+    .mod-agora-collapsed .mod-agora-rows {
+        /* Чуть меньше трёх строк (кадр 120×68 плюс отступы строки): нижняя
+           строка срезана тенью, и видно, что список продолжается. */
+        max-height: 15rem;
+        overflow: hidden;
+        mask-image: linear-gradient(to bottom, #000 70%, transparent 100%);
+    }
+
+    .mod-agora-playlist .mod-agora-collapsed .mod-agora-showall.btn {
+        display: inline-block;
+    }
+}
+
+/* На бумаге прокрутки нет: список печатается целиком и своей высотой. */
+@media print {
+    .mod-agora-playlist-inner {
+        position: static;
+        overflow: visible;
+    }
+
+    .mod-agora-playlist-inner .mod-agora-block-head {
+        position: static;
+    }
+
+    .mod-agora-playlist .mod-agora-showall.btn {
+        display: none;
+    }
+}
+
+.mod-agora-row {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.4rem;
+    border-radius: 0.5rem;
+}
+
+.mod-agora-row + .mod-agora-row {
+    margin-top: 0.25rem;
+}
+
+.mod-agora-row-current {
+    border-left: 3px solid var(--primary, #0f6cbf);
+    background: rgba(15, 108, 191, 0.06);
+}
+
+.mod-agora-row-current .mod-agora-row-name {
+    font-weight: 600;
+}
+
+.mod-agora-row-dimmed {
+    opacity: 0.65;
+}
+
+.mod-agora-row-section {
+    margin-top: 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.mod-agora-row-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 0.1rem;
+}
+
+.mod-agora-row-name {
+    font-size: 0.95rem;
+    line-height: 1.25;
+}
+
+.mod-agora-row-now,
+.mod-agora-row-flag,
+.mod-agora-row-subtitle,
+.mod-agora-row-stream {
+    font-size: 0.8rem;
+    line-height: 1.25;
+}
+
+/* Карточка курса: обложка со «стопкой» — две полосы над кадром. */
+.mod-agora-card + .mod-agora-card {
+    margin-top: 0.75rem;
+}
+
+.mod-agora-card-link {
+    display: flex;
+    gap: 0.75rem;
+    text-decoration: none;
+    color: inherit;
+}
+
+.mod-agora-card-cover {
+    position: relative;
+    display: block;
+    flex: none;
+    margin-top: 6px;
+}
+
+.mod-agora-card-cover::before,
+.mod-agora-card-cover::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 0.5rem 0.5rem 0 0;
+    background: rgba(0, 0, 0, 0.18);
+}
+
+.mod-agora-card-cover::before {
+    top: -6px;
+    width: 84%;
+    height: 6px;
+}
+
+.mod-agora-card-cover::after {
+    top: -3px;
+    width: 92%;
+    height: 3px;
+    background: rgba(0, 0, 0, 0.28);
+}
+
+.mod-agora-card-count {
+    position: absolute;
+    right: 0.4rem;
+    bottom: 0.4rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.72rem;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.72);
+}
+
+.mod-agora-card-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 0.1rem;
+}
+
+.mod-agora-card-name {
+    font-size: 0.95rem;
+    line-height: 1.25;
+    font-weight: 600;
+}
+
+.mod-agora-card-sub {
+    font-size: 0.8rem;
+    line-height: 1.25;
+}
+
+/* Узкий контейнер: кадр мельче, иначе тексту не остаётся места. */
+@container (max-width: 576px) {
+    .mod-agora-preview-side {
+        width: 120px;
+    }
+}
+
+/* Длинное слово не расталкивает сетку: имена и подстроки режутся по строкам,
+   а внутри слова допускается перенос. */
+.mod-agora-clamp-1,
+.mod-agora-clamp-2 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+}
+
+.mod-agora-clamp-1 {
+    -webkit-line-clamp: 1;
+}
+
+.mod-agora-clamp-2 {
+    -webkit-line-clamp: 2;
+}
+
+/* Область комментариев: разметку рисует ядро, мы правим только вид. Виджет
+   ядра набран одиннадцатым кеглем 2011 года — под плеером на 1440px это видно
+   сразу. `display` у `.comment-ctrl` не трогаем ни при каких условиях: JS ядра
+   читает вычисленное значение и при любом не-`none` уходит в ветку «скрыть». */
+.mod-agora-comments {
+    max-width: 1280px;
+    margin-top: 1.5rem;
+}
+
+.mod-agora-comments .comment-area {
+    /* Тема держит поле в 400px; под плеером оно должно быть во всю ширину. */
+    max-width: none;
+    margin-bottom: 1rem;
+}
+
+.mod-agora-comments .comment-area textarea {
+    width: 100%;
+    min-height: 4rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #b1b7bd;
+    border-radius: 0.5rem;
+    font-size: 0.95rem;
+}
+
+/* «Сохранить комментарий» у ядра — текстовая ссылка справа; под плеером это
+   кнопка, как и любое другое действие страницы. */
+.mod-agora-comments .comment-area .fd {
+    text-align: left;
+}
+
+.mod-agora-comments .comment-area .fd a {
+    display: inline-block;
+    margin-right: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.25rem;
+    color: #fff;
+    background: var(--primary, #0f6cbf);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.mod-agora-comments .comment-area .fd a + span + a {
+    color: inherit;
+    background: none;
+    padding-left: 0;
+}
+
+.mod-agora-comments .comment-list {
+    margin: 0;
+    padding: 0;
+    font-size: 0.95rem;
+}
+
+.mod-agora-comments .comment-list li {
+    padding: 0.5rem 0;
+    border-top: 1px solid #dee2e6;
+}
+
+.mod-agora-comments .comment-list li.first {
+    border-top: 0;
+    padding: 0;
+}
+
+.mod-agora-comments .comment-message-meta {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+/* Комментарий из одного длинного слова не расталкивает сетку страницы. */
+.mod-agora-comments .comment-message .text {
+    overflow-wrap: anywhere;
+}
+
+/* Ссылка «показать комментарии без JS» — единственная дверь к ленте, когда
+   скриптов нет: прятать её нельзя, но и кричать ей незачем. */
+.mod-agora-comments .showcommentsnonjs {
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+/* Публикатор: локальный кадр держит пропорции сцены, тумблеры — под ним,
+   состояние — под тумблерами. */
+.mod-agora-publisher-stage {
+    position: relative;
+    margin-bottom: 0.75rem;
+}
+
+.mod-agora-publisher-phase {
+    padding: 0.5rem 0.75rem;
+}
+
+.mod-agora-publisher-devices {
+    margin-top: 0.5rem;
+}
+
+.mod-agora-publisher-devices .btn {
+    margin-right: 0.4rem;
+}
+
+.mod-agora-publisher-broadcast {
+    margin-top: 0.75rem;
+}
+
+.mod-agora-publisher-video {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #1d2125;
+    border-radius: 0.5rem;
+    object-fit: contain;
+}
+
+.mod-agora-publisher-status {
+    margin-top: 0.5rem;
+    margin-bottom: 0;
+}
+
+.mod-agora-publish-browser {
+    margin-top: 0.5rem;
+}

@@ -1,0 +1,270 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_agora/watch_page
+
+    The "Agora broadcast" element page in two grid rows: the stage and the
+    course broadcast list, with the comments area and cards of other courses
+    below.
+
+    Classes required for JS:
+    * mod-agora-comments — comments area, inside which the new-comment field
+      is moved above the feed
+
+    Data attributes required for JS:
+    * data-region="agora-scene" — the stage: the mod_agora/watch module swaps
+      its player for the live one once the broadcast has started; data-cmid, data-contextid, data-kind, data-poll, data-jitter
+    * data-region="agora-playlist" — the course broadcast list section, which
+      the mod_agora/watch module collapses on a narrow screen
+    * data-action="agora-showall" — the "Show all" button
+
+    Context variables required for this template:
+    * player string — ready player or placeholder markup
+    * scene object — cmid, contextid, kind (what the stage shows: live, starting, record,
+      placeholder, norecordyet, unknown), poll (whether to ask whether the
+      broadcast has started), interval and jitter (polling seconds)
+    * meta object — metadata strings: badge, badgeclass, hassectionname,
+      sectionname (already passed through format_string), hasstreamname, streamname
+    * broadcast object — broadcast management strings: showpending/pending ("ending
+      failed: action, reason") and showended/ended/hint (how it ended and a
+      hint about a new element on the finished element's page)
+    * publish object — "How to broadcast" block: show, title, hasstring, hidden
+      (collapsed: no address, a "Show address" button) or revealed
+      (connection string, "Hide address", canrotate/rotatelabel/
+      rotateconfirm), copyhint, obshelp, browserurl/browserlabel
+      (publisher as a button below the block), noaddress, showportstate/
+      portmessage/portclass (port state)
+    * hasactions boolean — the page has action buttons
+    * actions array — action buttons: key, url, label, blank (open in a new
+      tab), optionally primary, disabled + hint (inactive button),
+      confirm (confirmation in the confirm() format)
+    * hasintro boolean — the element has a description
+    * intro string — element description
+    * staleness object — show, failed and minutes: string about the state warm-up
+      lag; failed — the last run errored, not just went stale
+    * hasplaylist boolean — course broadcast list exists
+    * playlist object — coursename (passed through format_string), total, hasprogress,
+      done, tracked, rows
+    * hascomments boolean — comments area exists
+    * comments object — count (how many comments) and html (core widget markup)
+    * hascourses boolean — "Other courses" block exists
+    * courses array — cards of the "Other courses" block
+
+    Example context (json):
+    {
+        "player": "<div class=\"mod-agora-player-wrapper\"></div>",
+        "scene": {"cmid": 42, "contextid": 100, "kind": "live", "poll": false, "interval": 15, "jitter": 5},
+        "meta": {
+            "badge": "Live",
+            "badgeclass": "mod-agora-state-badge-live",
+            "hassectionname": true,
+            "sectionname": "Topic 1",
+            "hasstreamname": false,
+            "streamname": ""
+        },
+        "actions": [
+            {"key": "record", "url": "https://moodle.example.com/mod/agora/view.php?id=42&record=1", "label": "Watch the recording"}
+        ],
+        "hasintro": true,
+        "intro": "<p>Diffraction and interference</p>",
+        "hasactions": true,
+        "staleness": {"show": false, "failed": false, "minutes": 0},
+        "hasplaylist": true,
+        "playlist": {
+            "coursename": "Optics",
+            "total": 4,
+            "hasprogress": true,
+            "done": 2,
+            "tracked": 3,
+            "rows": []
+        },
+        "hascomments": true,
+        "comments": {"count": 0, "html": "<div class=\"comment-ctrl\"></div>"},
+        "hascourses": false,
+        "courses": []
+    }
+}}
+{{!
+    The outer element is only a container: a container query cannot style
+    the container itself, so the grid lives on a nested element.
+}}
+<div class="mod-agora-watch">
+<div class="mod-agora-watch-split{{#hasplaylist}} mod-agora-has-playlist{{/hasplaylist}}{{#hascomments}} mod-agora-has-comments{{/hascomments}}{{#hascourses}} mod-agora-has-courses{{/hascourses}}">
+    <div class="mod-agora-stage">
+        {{#staleness.show}}
+            <div class="mod-agora-staleness text-muted small">
+                {{#staleness.failed}}{{#str}}statesrefreshfailedline, mod_agora{{/str}}{{/staleness.failed}}
+                {{^staleness.failed}}{{#str}}statesstale, mod_agora, {{staleness.minutes}}{{/str}}{{/staleness.failed}}
+            </div>
+        {{/staleness.show}}
+        <div class="mod-agora-scene" data-region="agora-scene" data-cmid="{{scene.cmid}}" data-contextid="{{scene.contextid}}" data-kind="{{scene.kind}}"
+             {{#scene.poll}}data-poll="{{scene.interval}}" data-jitter="{{scene.jitter}}"{{/scene.poll}}>
+            {{{player}}}
+        </div>
+        {{#broadcast.showpending}}
+            <div class="mod-agora-broadcast-pending alert alert-danger">{{broadcast.pending}}</div>
+        {{/broadcast.showpending}}
+        {{#broadcast.showended}}
+            <div class="mod-agora-broadcast-ended alert alert-info">
+                {{broadcast.ended}}
+                {{#broadcast.hint}}<div class="mod-agora-broadcast-hint text-muted small">{{broadcast.hint}}</div>{{/broadcast.hint}}
+            </div>
+        {{/broadcast.showended}}
+        {{#publish.show}}
+            <div class="mod-agora-publish alert alert-secondary">
+                <h4 class="mod-agora-block-title">{{publish.title}}</h4>
+                {{#publish.hasstring}}
+                    {{#publish.hidden}}
+                        {{! Collapsed view (D12): no address or key in the HTML
+                            until an explicit action; showing it is a POST with
+                            a log event (Ф-1). }}
+                        <form method="post" action="/mod/agora/view.php">
+                            <input type="hidden" name="id" value="{{publish.cmid}}">
+                            <input type="hidden" name="sesskey" value="{{publish.sesskey}}">
+                            <input type="hidden" name="action" value="revealkey">
+                            <button type="submit" class="btn btn-outline-secondary w-100"
+                                    data-action="agora-revealkey">{{publish.reveallabel}}</button>
+                        </form>
+                    {{/publish.hidden}}
+                    {{#publish.revealed}}
+                        <div class="mod-agora-publish-line">
+                            <input type="text" readonly class="form-control d-inline-block w-auto" value="{{publish.connection}}"
+                                   title="{{publish.copyhint}}" onclick="this.select()">
+                            {{! Hiding the address reveals nothing: an action
+                                without a log event (D12). }}
+                            <form method="post" action="/mod/agora/view.php" class="d-inline">
+                                <input type="hidden" name="id" value="{{publish.cmid}}">
+                                <input type="hidden" name="sesskey" value="{{publish.sesskey}}">
+                                <input type="hidden" name="action" value="hidekey">
+                                <button type="submit" class="btn btn-outline-secondary btn-sm"
+                                        data-action="agora-hidekey">{{publish.hidelabel}}</button>
+                            </form>
+                            {{#publish.canrotate}}
+                                <form method="post" action="/mod/agora/view.php" class="d-inline">
+                                    <input type="hidden" name="id" value="{{publish.cmid}}">
+                                    <input type="hidden" name="sesskey" value="{{publish.sesskey}}">
+                                    <input type="hidden" name="action" value="rotatekey">
+                                    <button type="submit" class="btn btn-link btn-sm" data-action="agora-rotatekey"
+                                            onclick="return confirm({{{publish.rotateconfirm}}})">{{publish.rotatelabel}}</button>
+                                </form>
+                            {{/publish.canrotate}}
+                        </div>
+                        <div class="mod-agora-publish-obs text-muted small">{{publish.obshelp}}</div>
+                    {{/publish.revealed}}
+                    {{#publish.browserurl}}
+                        {{! The publisher is a separate button below the
+                            address block, in a new window (D7, D12): the element
+                            page with its own buttons stays at hand. }}
+                        <div class="mod-agora-publish-browser">
+                            <a href="{{publish.browserurl}}" class="btn btn-primary" data-action="agora-publishopen"
+                               target="_blank" rel="noopener">
+                                {{publish.browserlabel}}</a>
+                        </div>
+                    {{/publish.browserurl}}
+                {{/publish.hasstring}}
+                {{^publish.hasstring}}
+                    <div class="mod-agora-publish-noaddress text-warning">{{publish.noaddress}}</div>
+                {{/publish.hasstring}}
+                {{#publish.showportstate}}
+                    <div class="mod-agora-publish-port small {{publish.portclass}}">{{publish.portmessage}}</div>
+                {{/publish.showportstate}}
+            </div>
+        {{/publish.show}}
+        <div class="mod-agora-metaline">
+            <span class="mod-agora-metafacts text-muted">
+                <span class="mod-agora-state-inline {{meta.badgeclass}}">{{meta.badge}}</span>
+                {{#meta.hassectionname}}
+                    <span class="mod-agora-metasep" aria-hidden="true">&middot;</span>
+                    <span class="mod-agora-metaitem">{{{meta.sectionname}}}</span>
+                {{/meta.hassectionname}}
+                {{#meta.hasstreamname}}
+                    <span class="mod-agora-metasep" aria-hidden="true">&middot;</span>
+                    <span class="mod-agora-metaitem mod-agora-metastream">{{meta.streamname}}</span>
+                {{/meta.hasstreamname}}
+            </span>
+            {{#hasactions}}
+                <span class="mod-agora-actions">
+                    {{#actions}}
+                        {{#disabled}}
+                            <span class="btn btn-outline-secondary btn-sm disabled" title="{{hint}}">{{label}}</span>
+                        {{/disabled}}
+                        {{^disabled}}
+                            {{#form}}
+                                {{! Broadcast management actions change state: POST only (review R2, Ф-1). }}
+                                <form method="post" action="/mod/agora/view.php" class="d-inline">
+                                    <input type="hidden" name="id" value="{{cmid}}">
+                                    <input type="hidden" name="sesskey" value="{{sesskey}}">
+                                    <input type="hidden" name="action" value="{{name}}">
+                                    <button type="submit" class="btn {{#primary}}btn-primary{{/primary}}{{^primary}}btn-outline-secondary{{/primary}} btn-sm"
+                                            data-action="agora-{{key}}"
+                                            {{#confirm}}onclick="return confirm({{{confirm}}})"{{/confirm}}>{{label}}</button>
+                                </form>
+                            {{/form}}
+                            {{^form}}
+                                <a href="{{url}}" class="btn {{#primary}}btn-primary{{/primary}}{{^primary}}btn-outline-secondary{{/primary}} btn-sm" data-action="agora-{{key}}"
+                                   {{#blank}}target="_blank" rel="noreferrer noopener"{{/blank}}
+                                   {{#confirm}}onclick="return confirm({{{confirm}}})"{{/confirm}}>{{label}}</a>
+                            {{/form}}
+                        {{/disabled}}
+                    {{/actions}}
+                </span>
+            {{/hasactions}}
+        </div>
+        {{#hasintro}}<div class="mod-agora-intro">{{{intro}}}</div>{{/hasintro}}
+    </div>
+    {{#playlist}}
+        <div class="mod-agora-playlist">
+            <section class="mod-agora-block mod-agora-playlist-inner" data-region="agora-playlist">
+                <div class="mod-agora-block-head">
+                    <h3 class="mod-agora-block-title">{{#str}}inthiscourse, mod_agora{{/str}}</h3>
+                    <div class="mod-agora-block-sub mod-agora-clamp-1">{{{coursename}}}</div>
+                    <div class="mod-agora-block-sub text-muted">{{#str}}streamscount, mod_agora, {{total}}{{/str}}</div>
+                    {{#hasprogress}}
+                        <div class="mod-agora-block-sub text-muted">
+                            {{#str}}progressdone, mod_agora, {"done": {{done}}, "total": {{tracked}}}{{/str}}
+                        </div>
+                    {{/hasprogress}}
+                </div>
+                <ul class="mod-agora-rows" role="group" aria-label="{{#str}}playlistlabel, mod_agora{{/str}}">
+                    {{#rows}}{{> mod_agora/playlist_row }}{{/rows}}
+                </ul>
+                <button type="button" class="btn btn-link btn-sm mod-agora-showall" data-action="agora-showall">
+                    {{#str}}showall, mod_agora{{/str}}
+                </button>
+            </section>
+        </div>
+    {{/playlist}}
+    {{#comments}}
+        <section class="mod-agora-comments" aria-labelledby="mod-agora-comments-title">
+            <h3 class="mod-agora-block-title" id="mod-agora-comments-title">
+                {{#str}}commentsheading, mod_agora, {{count}}{{/str}}
+            </h3>
+            {{{html}}}
+        </section>
+    {{/comments}}
+    {{#hascourses}}
+        <div class="mod-agora-courses">
+            <section class="mod-agora-block">
+                <h3 class="mod-agora-block-title">{{#str}}othercourses, mod_agora{{/str}}</h3>
+                <ul class="mod-agora-cards">
+                    {{#courses}}{{> mod_agora/course_card }}{{/courses}}
+                </ul>
+            </section>
+        </div>
+    {{/hascourses}}
+</div>
+</div>

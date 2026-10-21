@@ -1,0 +1,91 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_agora/playlist_row
+
+    Sidebar row: frame with a badge on the left, name and subtitle on the right.
+
+    Classes required for JS:
+    * none
+
+    Data attributes required for JS:
+    * none
+
+    Context variables required for this template:
+    * card object — data for the mod_agora/preview_card template
+    * name string — element name, already passed through format_string (output
+      as HTML)
+    * haslink boolean — the row links to the element page
+    * link string — URL of the element page
+    * current boolean — this is the open element
+    * hidden boolean — element hidden from learners
+    * locked boolean — element closed by an access restriction
+    * hassubtitle boolean — has a subtitle
+    * subtitle string — element description in one line, or the access
+      condition
+    * hasstreamname boolean — show the broadcast name (to the presenter)
+    * streamname string — broadcast name in Agora
+    * hassectionname boolean — the course section name is shown above the row
+    * sectionname string — course section name, already passed through
+      format_string
+
+    Example context (json):
+    {
+        "card": {
+            "haslink": false,
+            "cardclass": "mod-agora-preview-card mod-agora-preview-side",
+            "decorative": false,
+            "hasimage": false,
+            "locked": false,
+            "hasbadge": true,
+            "badge": "Live",
+            "badgeclass": "mod-agora-state-badge-live",
+            "srbadge": true
+        },
+        "name": "Lecture on optics",
+        "haslink": true,
+        "link": "https://moodle.example.com/mod/agora/view.php?id=42",
+        "current": false,
+        "hidden": false,
+        "locked": false,
+        "hassubtitle": true,
+        "subtitle": "Diffraction and interference",
+        "hasstreamname": false,
+        "streamname": "",
+        "hassectionname": true,
+        "sectionname": "Topic 1"
+    }
+}}
+{{#hassectionname}}
+    <li class="mod-agora-row-section text-muted">{{{sectionname}}}</li>
+{{/hassectionname}}
+<li class="mod-agora-row{{#current}} mod-agora-row-current{{/current}}{{#hidden}} mod-agora-row-dimmed{{/hidden}}{{!
+    }}{{#locked}} mod-agora-row-dimmed{{/locked}}" {{#current}}aria-current="page"{{/current}}>
+    {{#card}}{{> mod_agora/preview_card }}{{/card}}
+    <div class="mod-agora-row-text">
+        {{#haslink}}
+            <a href="{{link}}" class="mod-agora-row-name mod-agora-clamp-2">{{{name}}}</a>
+        {{/haslink}}
+        {{^haslink}}
+            <span class="mod-agora-row-name mod-agora-clamp-2">{{{name}}}</span>
+        {{/haslink}}
+        {{#current}}<span class="mod-agora-row-now text-muted">{{#str}}nowopen, mod_agora{{/str}}</span>{{/current}}
+        {{#hidden}}<span class="mod-agora-row-flag text-muted">{{#str}}hiddenfromstudents{{/str}}</span>{{/hidden}}
+        {{#hassubtitle}}<span class="mod-agora-row-subtitle text-muted {{#locked}}mod-agora-clamp-1{{/locked}}{{^locked}}mod-agora-clamp-2{{/locked}}">{{subtitle}}</span>{{/hassubtitle}}
+        {{#hasstreamname}}<span class="mod-agora-row-stream text-muted mod-agora-clamp-1">{{streamname}}</span>{{/hasstreamname}}
+    </div>
+</li>
