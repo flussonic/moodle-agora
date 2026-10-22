@@ -33,8 +33,11 @@ jobs:
             *-rc.*)
               grep -qF "rc." <<<"$RELEASE" || { echo "rc tag, but release has no rc"; exit 1; } ;;
             *)
-              grep -qF "rc." <<<"$RELEASE" && { echo "stable tag, but release has rc"; exit 1; } ;;
+              if grep -qF "rc." <<<"$RELEASE"; then
+                echo "stable tag, but release has rc"; exit 1
+              fi ;;
           esac
+          echo "version.php matches the tag"
 
       - name: Build the plugin ZIP
         run: |
