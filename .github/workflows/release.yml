@@ -1,12 +1,13 @@
-# Валидация тега и публикация GitHub Release с ZIP плагина.
-# Живёт в mod_agora/.github/workflows/, чтобы через git subtree split попасть
-# в корень GitHub-репо moodle-mod_agora. В ZIP не входит (build-zip.sh и
-# шаг сборки ниже исключают .git*/.github).
+# Tag validation and GitHub Release publication with the plugin ZIP.
+# Lives in mod_agora/.github/workflows/ so that a snapshot sync puts it at
+# the root of the GitHub repository. It is excluded from the ZIP itself
+# (the build step below excludes .git*/.github).
 name: Release
 
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -24,15 +25,15 @@ jobs:
           MATURITY=$(grep -oE 'MATURITY_[A-Z]+' version.php | head -1)
           RELEASE=$(sed -nE "s/^\\\$plugin->release *= *'([^']+)'.*/\1/p" version.php)
           echo "tag: ${GITHUB_REF_NAME}, version.php: version=${VERSION} release='${RELEASE}' maturity=${MATURITY}"
-          [ "$MATURITY" != "MATURITY_ALPHA" ] || { echo "maturity ALPHA в релизном теге"; exit 1; }
+          [ "$MATURITY" != "MATURITY_ALPHA" ] || { echo "ALPHA maturity in a release tag"; exit 1; }
           BUILD_DATE=${VERSION:0:8}
           grep -qF "(Build: ${BUILD_DATE})" <<<"$RELEASE" \
-            || { echo "дата Build в release не совпадает с датой version"; exit 1; }
+            || { echo "the Build date in release does not match the version date"; exit 1; }
           case "$GITHUB_REF_NAME" in
             *-rc.*)
-              grep -qF "rc." <<<"$RELEASE" || { echo "тег rc, а release без rc"; exit 1; } ;;
+              grep -qF "rc." <<<"$RELEASE" || { echo "rc tag, but release has no rc"; exit 1; } ;;
             *)
-              grep -qF "rc." <<<"$RELEASE" && { echo "стабильный тег, а release с rc"; exit 1; } ;;
+              grep -qF "rc." <<<"$RELEASE" && { echo "stable tag, but release has rc"; exit 1; } ;;
           esac
 
       - name: Build the plugin ZIP
