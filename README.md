@@ -30,15 +30,15 @@ modules → Agora broadcast.
 To build the distributable archive from a checkout (tests are not shipped):
 
 ```
-cp -r mod_agora agora
+cp -r <checkout> agora
 zip -r mod_agora.zip agora -x '*/tests/*'
 rm -rf agora
 ```
 
-The directory inside the archive must be named `agora`, not `mod_agora`: Moodle
-installs an activity module by the directory name, and the plugin only works at
-`mod/agora`. Zipping the checkout directory as it is produces an archive Moodle
-rejects.
+The directory inside the archive must be named `agora`, whatever the checkout
+itself is called: Moodle installs an activity module by the directory name,
+and the plugin only works at `mod/agora`. Zipping the checkout directory as it
+is produces an archive Moodle rejects.
 
 ## Documentation
 
