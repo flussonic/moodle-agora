@@ -64,4 +64,4 @@ Every line is something the plugin does not do; no dates are promised.
 
 ---
 
-← Previous: [What the Agora operator sees](11-agora-console.md)
+← Previous: [What the Agora operator sees](11-agora-console.md) · [All topics](README.md)

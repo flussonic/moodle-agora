@@ -27,8 +27,7 @@ Separately, the sessions contain records of the form `label:service:preview` —
 these are not learners but service calls of the Moodle server for the thumbnail
 frame and for the bounds of a recording (where to start and stop playing it). Such a ticket is issued for one stream, one hour, up to ten screens, and is
 reused: every web node and cron node of Moodle reaches the Agora node from its
-own address, and every such address is a separate session (checked on the
-stand). Service sessions count towards the total session count of the server
+own address, and every such address is a separate session. Service sessions count towards the total session count of the server
 and towards the licence session limit. A service ticket is not bound to an
 address: it is presented by the Moodle server, not by a browser — which is why
 the Moodle server reads the bounds of a recording with it and not with the

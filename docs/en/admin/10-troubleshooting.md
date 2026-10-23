@@ -82,8 +82,8 @@ every such request occupies a PHP worker. The frame request therefore has its
 own, shorter timeouts: 3 seconds to connect and 5 seconds for the frame request
 itself, all redirects to the delivery node included — every redirect gets only what is
 left of the five seconds. An unreachable or stalled node ends as "no frame" on
-the fifth second instead of holding workers for twenty (on the stand an
-unreachable node ended after 3 seconds per card, and the course page did not
+the fifth second instead of holding workers for twenty (an
+unreachable node ends after 3 seconds per card, and the course page does not
 depend on it at all). The 5 seconds do not include the check of the node name
 against the Moodle blocklist ("cURL blocked hosts" — the name is resolved before
 the request) nor issuing the service ticket before the frame: those have their
